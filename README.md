@@ -1,3 +1,9 @@
+# 🚨 DEPRECATED 🚨
+
+In favor of simplicity and one less database trip, we're making live v1 work with only one deploy per site, integrating the router and the renderer.
+
+This repo is archived and will be deleted in the future.
+
 # Deco router service
 
 ### Usage
