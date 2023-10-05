@@ -1,5 +1,5 @@
-name = "fragrant-dawn-3408"
-main = "src/index.ts"
+name = "router"
+main = "src/router.ts"
 compatibility_date = "2023-10-02"
 
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
@@ -49,3 +49,14 @@ compatibility_date = "2023-10-02"
 # [[migrations]]
 # tag = "v1"
 # new_classes = ["MyDurableObject"]
+
+[[rules]]
+type = "ESModule"
+globs = ["**/*.ts"]
+
+[dev]
+port = 8001
+local_protocol = "http"
+
+[[analytics_engine_datasets]]
+binding = "CACHE_HIT"

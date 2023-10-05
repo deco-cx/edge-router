@@ -1,5 +1,5 @@
 {
-  "name": "fragrant-dawn-3408",
+  "name": "router",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -8,8 +8,11 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230419.0",
-    "itty-router": "^3.0.12",
+    "@types/cookie": "^0.5.2",
     "typescript": "^5.0.4",
     "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "cookie": "^0.5.0"
   }
 }
