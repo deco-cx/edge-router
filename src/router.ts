@@ -16,15 +16,14 @@ export default {
     _env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    console.log("req received", request.url);
     const targetUrl = ddUrl(request);
-    console.log("target url", targetUrl);
 
     if (!isBrowserRequestingPages(request)) {
       return fetch(targetUrl, request);
     }
 
     const cacheStale = cacheStaleFor(
+      request,
       CACHE_TIME_MIN_SECONDS +
         (Math.floor(Math.random() * CACHE_TIME_MAX_SECONDS)),
       cache,
@@ -32,7 +31,8 @@ export default {
     );
 
     const requestETag = getETag(request);
-    let response = requestETag ? await cache.match(requestETag) : undefined;
+    const requestKey = new Request(request, { cf: { cacheKey: requestETag } });
+    let response = requestETag ? await cache.match(requestKey) : undefined;
     console.log("hit", response !== undefined);
     if (!response) {
       // If not in cache, get it from origin

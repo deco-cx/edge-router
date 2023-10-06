@@ -35,14 +35,20 @@ export const isBrowserRequestingPages = (req: Request): boolean => {
 };
 
 export const cacheStaleFor =
-  (timeMs: number, cache: typeof caches["default"], ctx: ExecutionContext) =>
+  (
+    req: Request,
+    timeMs: number,
+    cache: typeof caches["default"],
+    ctx: ExecutionContext,
+  ) =>
   (response: Response) => {
     // Any changes made to the response here will be reflected in the cached value
     const etag = getETag(response);
     if (etag) {
       const cachedResponse = new Response(response.body, response);
       cachedResponse.headers.append("Cache-Control", `s-maxage=${timeMs}`);
-      ctx.waitUntil(cache.put(etag, cachedResponse.clone()));
+      const request = new Request(req, { cf: { cacheKey: etag } });
+      ctx.waitUntil(cache.put(request, cachedResponse.clone()));
       return cachedResponse;
     }
     return response;
