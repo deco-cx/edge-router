@@ -5,11 +5,18 @@ const DECO_ETAG_COOKIE = "deco_etag";
 /**
  * @returns the cache key of the given request
  */
-export const getETag = (req: Request | Response): string | undefined => {
+export const getETagFromRequest = (req: Request): string | undefined => {
   const cookies = cookie.parse(req.headers.get("cookie") || "");
   return cookies[DECO_ETAG_COOKIE];
 };
 
+/**
+ * @returns the cache key of the given request
+ */
+export const getETagFromResponse = (req: Response): string | undefined => {
+  const cookies = cookie.parse(req.headers.get("set-cookie") || "");
+  return cookies[DECO_ETAG_COOKIE];
+};
 const DECO_DOMAIN_PREFIX = "deco-sites";
 
 /**
@@ -42,13 +49,10 @@ export const cacheStaleFor = (
 ) =>
 (response: Response) => {
   // Any changes made to the response here will be reflected in the cached value
-  const etag = getETag(response);
-  console.log("response etag", { responseETag: etag });
-
+  const etag = getETagFromResponse(response);
   if (etag) {
     const cachedResponse = new Response(response.body, response);
     cachedResponse.headers.append("Cache-Control", `s-maxage=${timeMs}`);
-    console.log("add cache", timeMs);
     ctx.waitUntil(cache.put(requestKey(req, etag), cachedResponse.clone()));
     return cachedResponse;
   }

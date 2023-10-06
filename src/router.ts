@@ -1,7 +1,8 @@
 import {
   cacheStaleFor,
   ddUrl,
-  getETag,
+  getETagFromRequest,
+  getETagFromResponse,
   isBrowserRequestingPages,
   requestKey,
 } from "./commons.ts";
@@ -31,8 +32,7 @@ export default {
       ctx,
     );
 
-    const requestETag = getETag(request);
-    console.log({ requestETag });
+    const requestETag = getETagFromRequest(request);
     let response = requestETag
       ? await cache.match(requestKey(request, requestETag))
       : undefined;
@@ -46,8 +46,7 @@ export default {
       const fetchAndCache = fetch(targetUrl, request).then(cacheStale);
       response = await Promise.race([
         fetch(head).then(async (response) => {
-          const responseETag = getETag(response);
-          console.log("head response", responseETag);
+          const responseETag = getETagFromResponse(response);
           // if does not have etag on header, then wait for the fetched response
           if (!responseETag) {
             return fetchAndCache;
