@@ -8,8 +8,8 @@ import {
 } from "./commons.ts";
 
 const cache = caches.default;
-const CACHE_TIME_MAX_SECONDS = 4;
-const CACHE_TIME_MIN_SECONDS = 1;
+const CACHE_TIME_MAX_SECONDS = 15;
+const CACHE_TIME_MIN_SECONDS = 10;
 
 // Export a default object containing event handlers
 export default {
@@ -47,6 +47,7 @@ export default {
       response = await Promise.race([
         fetch(head).then(async (response) => {
           const responseETag = getETagFromResponse(response);
+          console.log("head response etag", responseETag);
           // if does not have etag on header, then wait for the fetched response
           if (!responseETag) {
             return fetchAndCache;
