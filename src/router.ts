@@ -16,7 +16,9 @@ export default {
     _env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
+    console.log("req received", request.url);
     const targetUrl = ddUrl(request);
+    console.log("target url", targetUrl);
 
     if (!isBrowserRequestingPages(request)) {
       return fetch(targetUrl, request);
@@ -31,6 +33,7 @@ export default {
 
     const requestETag = getETag(request);
     let response = requestETag ? await cache.match(requestETag) : undefined;
+    console.log("hit", response !== undefined);
     if (!response) {
       // If not in cache, get it from origin
       const head = new Request(targetUrl, {
