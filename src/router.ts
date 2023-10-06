@@ -1,5 +1,6 @@
 import {
   cacheStaleFor,
+  canBeCached,
   ddUrl,
   getETagFromRequest,
   getETagFromResponse,
@@ -7,10 +8,10 @@ import {
   requestKey,
 } from "./commons.ts";
 
-const cache = caches.default;
 const CACHE_TIME_MAX_SECONDS = 15;
 const CACHE_TIME_MIN_SECONDS = 10;
 
+const cachesPromise = [caches.open("default"), caches.open("pages")];
 // Export a default object containing event handlers
 export default {
   async fetch(
@@ -18,14 +19,20 @@ export default {
     _env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    const targetUrl = ddUrl(request);
+    const [defaultCache, pagesCache] = await Promise.all(cachesPromise);
+
+    const reqUrl = new URL(request.url);
+    const targetUrl = reqUrl.searchParams.get("targetUrl") ?? ddUrl(request);
 
     if (!isBrowserRequestingPages(request)) {
-      const cachedResponse = await cache.match(request);
+      const cachedResponse = await defaultCache.match(request);
       return cachedResponse ?? fetch(targetUrl, request).then((response) => {
-        const copiedResponse = new Response(response.body, response);
-        ctx.waitUntil(cache.put(request, copiedResponse.clone()));
-        return copiedResponse;
+        if (canBeCached(request, response)) {
+          const copiedResponse = new Response(response.body, response);
+          ctx.waitUntil(defaultCache.put(request, copiedResponse.clone()));
+          return copiedResponse;
+        }
+        return response;
       });
     }
     const timeSecondsTtl = CACHE_TIME_MIN_SECONDS +
@@ -34,14 +41,17 @@ export default {
     const cacheStale = cacheStaleFor(
       request,
       timeSecondsTtl,
-      cache,
+      pagesCache,
       ctx,
     );
 
     const requestETag = getETagFromRequest(request);
+    console.log("request ETag", requestETag);
     let response = requestETag
-      ? await cache.match(requestKey(request, requestETag, timeSecondsTtl))
+      ? await pagesCache.match(requestKey(request, requestETag))
       : undefined;
+
+    console.log("hit", response !== undefined);
     if (!response) {
       // If not in cache, get it from origin
       const head = new Request(targetUrl, {
@@ -59,7 +69,7 @@ export default {
           // otherwise check if the response is cached and get the fastest response from either cached or fetched response.
           return await Promise.race([
             fetchAndCache,
-            cache.match(requestKey(request, responseETag, timeSecondsTtl)).then(
+            pagesCache.match(requestKey(request, responseETag)).then(
               (response) => {
                 return response ?? fetchAndCache;
               },

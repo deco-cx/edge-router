@@ -44,7 +44,7 @@ export const isBrowserRequestingPages = (req: Request): boolean => {
 export const cacheStaleFor = (
   req: Request,
   timeSeconds: number,
-  cache: typeof caches["default"],
+  cache: Awaited<ReturnType<typeof caches["open"]>>,
   ctx: ExecutionContext,
 ) =>
 (response: Response) => {
@@ -53,8 +53,9 @@ export const cacheStaleFor = (
   if (etag) {
     const cachedResponse = new Response(response.body, response);
     cachedResponse.headers.append("Cache-Control", `s-maxage=${timeSeconds}`);
+    console.log("caching", etag);
     ctx.waitUntil(
-      cache.put(requestKey(req, etag, timeSeconds), cachedResponse.clone()),
+      cache.put(requestKey(req, etag), cachedResponse.clone()),
     );
     return cachedResponse;
   }
@@ -64,13 +65,21 @@ export const cacheStaleFor = (
 export const requestKey = (
   req: Request,
   cacheKey: string,
-  timeSeconds: number,
 ) => {
-  return new Request(req, {
-    cf: {
-      cacheKey,
-      cacheEverything: true,
-      cacheTtl: timeSeconds,
-    },
-  });
+  const reqUrl = new URL(req.url);
+  reqUrl.searchParams.set("__deco_etag", cacheKey);
+  return new Request(reqUrl, req);
+};
+
+export const canBeCached = (req: Request, res: Response) => {
+  if (req.method !== "GET") {
+    return false;
+  }
+  if (res.headers.get("vary") === "*") {
+    return false;
+  }
+  if (res.status === 206) {
+    return false;
+  }
+  return true;
 };
