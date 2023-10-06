@@ -8,8 +8,8 @@ import {
   requestKey,
 } from "./commons.ts";
 
-const CACHE_TIME_MAX_SECONDS = 15;
-const CACHE_TIME_MIN_SECONDS = 10;
+const CACHE_TIME_MAX_SECONDS = 4;
+const CACHE_TIME_MIN_SECONDS = 1;
 
 const cachesPromise = [caches.open("default"), caches.open("pages")];
 // Export a default object containing event handlers
@@ -46,7 +46,6 @@ export default {
     );
 
     const requestETag = getETagFromRequest(request);
-    console.log("request ETag", requestETag);
     let response = requestETag
       ? await pagesCache.match(requestKey(request, requestETag))
       : undefined;

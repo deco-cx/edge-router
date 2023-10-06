@@ -52,8 +52,10 @@ export const cacheStaleFor = (
   const etag = getETagFromResponse(response);
   if (etag) {
     const cachedResponse = new Response(response.body, response);
-    cachedResponse.headers.append("Cache-Control", `s-maxage=${timeSeconds}`);
-    console.log("caching", etag);
+    cachedResponse.headers.append(
+      "Cache-Control",
+      `private=set-cookie;s-maxage=${timeSeconds}`,
+    );
     ctx.waitUntil(
       cache.put(requestKey(req, etag), cachedResponse.clone()),
     );
