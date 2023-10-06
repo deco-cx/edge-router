@@ -50,17 +50,27 @@ export const cacheStaleFor = (
 (response: Response) => {
   // Any changes made to the response here will be reflected in the cached value
   const etag = getETagFromResponse(response);
-  console.log("fetch etag response", etag);
   if (etag) {
     const cachedResponse = new Response(response.body, response);
     cachedResponse.headers.append("Cache-Control", `s-maxage=${timeSeconds}`);
-    console.log("cache for", timeSeconds);
-    ctx.waitUntil(cache.put(requestKey(req, etag), cachedResponse.clone()));
+    ctx.waitUntil(
+      cache.put(requestKey(req, etag, timeSeconds), cachedResponse.clone()),
+    );
     return cachedResponse;
   }
   return response;
 };
 
-export const requestKey = (req: Request, cacheKey: string) => {
-  return new Request(req, { cf: { cacheKey } });
+export const requestKey = (
+  req: Request,
+  cacheKey: string,
+  timeSeconds: number,
+) => {
+  return new Request(req, {
+    cf: {
+      cacheKey,
+      cacheEverything: true,
+      cacheTtl: timeSeconds,
+    },
+  });
 };
