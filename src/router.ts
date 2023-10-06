@@ -3,6 +3,7 @@ import {
   ddUrl,
   getETag,
   isBrowserRequestingPages,
+  requestKey,
 } from "./commons.ts";
 
 const cache = caches.default;
@@ -31,8 +32,10 @@ export default {
     );
 
     const requestETag = getETag(request);
-    const requestKey = new Request(request, { cf: { cacheKey: requestETag } });
-    let response = requestETag ? await cache.match(requestKey) : undefined;
+    console.log({ requestETag });
+    let response = requestETag
+      ? await cache.match(requestKey(request, requestETag))
+      : undefined;
     console.log("hit", response !== undefined);
     if (!response) {
       // If not in cache, get it from origin
@@ -51,7 +54,7 @@ export default {
           // otherwise check if the response is cached and get the fastest response from either cached or fetched response.
           return await Promise.race([
             fetchAndCache,
-            cache.match(responseETag).then((response) => {
+            cache.match(requestKey(request, responseETag)).then((response) => {
               return response ?? fetchAndCache;
             }),
           ]);

@@ -34,22 +34,26 @@ export const isBrowserRequestingPages = (req: Request): boolean => {
       req.headers.get("user-agent") !== null || false;
 };
 
-export const cacheStaleFor =
-  (
-    req: Request,
-    timeMs: number,
-    cache: typeof caches["default"],
-    ctx: ExecutionContext,
-  ) =>
-  (response: Response) => {
-    // Any changes made to the response here will be reflected in the cached value
-    const etag = getETag(response);
-    if (etag) {
-      const cachedResponse = new Response(response.body, response);
-      cachedResponse.headers.append("Cache-Control", `s-maxage=${timeMs}`);
-      const request = new Request(req, { cf: { cacheKey: etag } });
-      ctx.waitUntil(cache.put(request, cachedResponse.clone()));
-      return cachedResponse;
-    }
-    return response;
-  };
+export const cacheStaleFor = (
+  req: Request,
+  timeMs: number,
+  cache: typeof caches["default"],
+  ctx: ExecutionContext,
+) =>
+(response: Response) => {
+  // Any changes made to the response here will be reflected in the cached value
+  const etag = getETag(response);
+  console.log({ responseETag: etag });
+
+  if (etag) {
+    const cachedResponse = new Response(response.body, response);
+    cachedResponse.headers.append("Cache-Control", `s-maxage=${timeMs}`);
+    ctx.waitUntil(cache.put(requestKey(req, etag), cachedResponse.clone()));
+    return cachedResponse;
+  }
+  return response;
+};
+
+export const requestKey = (req: Request, cacheKey: string) => {
+  return new Request(req, { cf: { cacheKey } });
+};
