@@ -60,3 +60,7 @@ local_protocol = "http"
 
 [[analytics_engine_datasets]]
 binding = "CACHE_HIT"
+
+[vars]
+CACHE_TIME_MAX_SECONDS = "5"
+CACHE_TIME_MIN_SECONDS = "1"

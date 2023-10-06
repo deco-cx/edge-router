@@ -58,7 +58,6 @@ export default {
       ? await pagesCache.match(requestKey(request, requestETag))
       : undefined;
 
-    console.log("hit", response !== undefined);
     if (!response) {
       // If not in cache, get it from origin
       const head = new Request(targetUrl, {
@@ -82,6 +81,9 @@ export default {
               },
             ),
           ]);
+        }).catch((err) => {
+          console.log("error running head request", err);
+          return fetchAndCache;
         }),
         fetchAndCache,
       ]);
