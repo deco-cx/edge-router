@@ -43,11 +43,12 @@ export const cacheStaleFor = (
 (response: Response) => {
   // Any changes made to the response here will be reflected in the cached value
   const etag = getETag(response);
-  console.log({ responseETag: etag });
+  console.log("response etag", { responseETag: etag });
 
   if (etag) {
     const cachedResponse = new Response(response.body, response);
     cachedResponse.headers.append("Cache-Control", `s-maxage=${timeMs}`);
+    console.log("add cache", timeMs);
     ctx.waitUntil(cache.put(requestKey(req, etag), cachedResponse.clone()));
     return cachedResponse;
   }

@@ -47,6 +47,7 @@ export default {
       response = await Promise.race([
         fetch(head).then(async (response) => {
           const responseETag = getETag(response);
+          console.log("head response", responseETag);
           // if does not have etag on header, then wait for the fetched response
           if (!responseETag) {
             return fetchAndCache;
