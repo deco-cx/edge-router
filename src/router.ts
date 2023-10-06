@@ -8,15 +8,15 @@ import {
   requestKey,
 } from "./commons.ts";
 
-const CACHE_TIME_MAX_SECONDS = 4;
-const CACHE_TIME_MIN_SECONDS = 1;
+const CACHE_TIME_DEFAULT_MAX_SECONDS = 5;
+const CACHE_TIME_DEFAULT_MIN_SECONDS = 1;
 
 const cachesPromise = [caches.open("default"), caches.open("pages")];
 // Export a default object containing event handlers
 export default {
   async fetch(
     request: Request,
-    _env: Env,
+    env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
     const [defaultCache, pagesCache] = await Promise.all(cachesPromise);
@@ -35,8 +35,16 @@ export default {
         return response;
       });
     }
-    const timeSecondsTtl = CACHE_TIME_MIN_SECONDS +
-      (Math.floor(Math.random() * CACHE_TIME_MAX_SECONDS));
+
+    const cacheTimeMinSeconds = env.CACHE_TIME_MIN_SECONDS
+      ? +env.CACHE_TIME_MIN_SECONDS ?? CACHE_TIME_DEFAULT_MIN_SECONDS
+      : CACHE_TIME_DEFAULT_MIN_SECONDS;
+    const cacheTimeMaxSeconds = env.CACHE_TIME_MAX_SECONDS
+      ? +env.CACHE_TIME_MAX_SECONDS ?? CACHE_TIME_DEFAULT_MAX_SECONDS
+      : CACHE_TIME_DEFAULT_MAX_SECONDS;
+
+    const timeSecondsTtl = cacheTimeMinSeconds +
+      (Math.floor(Math.random() * (cacheTimeMaxSeconds - cacheTimeMinSeconds)));
 
     const cacheStale = cacheStaleFor(
       request,
